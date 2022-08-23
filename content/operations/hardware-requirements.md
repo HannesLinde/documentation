@@ -14,29 +14,28 @@ We recommend to use the provided Docker containers, so there might be additional
 
 ### Application
 
-For high availability, you can put a load balancer in front of multiple instances of both the server and editor.
+For high availability, you can place a load balancer in front of multiple instances of both the server and editor.
 
 #### Editor
 
-Serving static files is a lightweight task. A basic Amazon S3 instance or a simple nginx installation should be sufficient. CPU, memory and disk requirements are low. Even with a large number of people working in the editor, you should not hit limitations quickly.
+The Livingdocs Editor's CPU requirements are similar to a small Node.js application. One Editor process requires ~200MB of memory and its disk storage requirements are minimal due to low application footprint.
 
 #### Server
 
-The servers CPU requirements compares to the ones of a regular node application. One process requires about 250MB memory. Disk is not an issue since the application footprint is low and uploaded assets are stored in the cloud. You can expect to hit limitations earlier in the server than in the editor. This of depends on the number of users and the tasks they and developers perform.
- If you expect a lot of traffic on the assets, it might be worth to put a CDN in front of resrc.it.
+The Livingdocs Server's CPU requirements can be compared to a regular Node.js application. One Server process requires ~500MB of memory. Disk is not an issue since the application footprint is low and uploaded assets are stored in the cloud. You might reach limitations earlier in the Server compared to the Editor. Limitations will depend on the number of users and the tasks performed.
+If you expect a lot of traffic on the assets, please consider adding a CDN in your storage solution.
 
 ### Databases
 
-The requirements for the databases of course depend on the amount of data you want to store. Also on the interactions with the database through users and developers. Depending on your requirements, you might want to think about replication.
+The requirements for the databases will depend greatly on the amount of data you want to store and number of transactions done by users and developers. Depending on your requirements, you might want to consider replication strategies for the database.
 
 #### Postgresql
 
-The database requirements are comparable to any other Postgres installation. There is an [extensive guide on Postgres hardware](https://wiki.postgresql.org/wiki/Database_Hardware) optimized for high performance.
+The database requirements are similar to regular Postgres installations. Please refer to [Postgres hardware guide](https://wiki.postgresql.org/wiki/Performance_Optimization) for high performance optimization.
 
 #### Elasticsearch
 
-Elasticsearch is more memory hungry than the rest of the stack. It should mostly be light on CPU though. Elasticsearch provides a good guide on [the hardware requirements](https://www.elastic.co/guide/en/elasticsearch/guide/master/hardware.html).
-
+Elasticsearch is a memory demanding process compared to the rest modules of the stack, but it should not have high CPU usage. Elasticsearch provides a good guide on [Elasticearch's hardware requirements](https://www.elastic.co/guide/en/elasticsearch/guide/master/hardware.html).
 
 ### Services
 
@@ -44,59 +43,67 @@ Elasticsearch is more memory hungry than the rest of the stack. It should mostly
 
 The storage your installation needs is directly coupled to the documents you upload and store. Cloud storage is easily scalable, so you should not expect any troubles here.
 
-
 ## Real life examples
 
 Below you can find an overview of real life installations.
 
-
 ### Minimum requirements
 
-We are running Livingdocs on very basic Amazon S3, Heroku and Cloudfoundry instances for demo, staging and development installations. This can be interpreted as the minimum requirements (no high availability and limited performance requirements).
+We are running Livingdocs on very basic Amazon S3, DigitalOcean compute instances for demo, staging and development installations. This can be interpreted as the minimum requirements (no high availability and limited performance requirements). The production deployment has the following specifications.
 
 Service | Specs | |
 :--- | :--- | ---
-**Editor** | Amazon S3
-**Server** | Heroku
-| | Instance | 1x standard-1x
-| | vCPU | 1
-| | Memory | 512 MB
-| | Disk | -
-**Postgres** | Heroku Postgres
-| | Instance | 1x Standard 0
-| | Memory | 1 GB
-| | Storage | 64 GB
-**Elasticsearch** | Hosted instance at elastic.co
-| | Cluster size | 1
-| | Memory | 1 GB
-| | SSD | 16 GB
+**Editor** | Self-hosted Kubernetes Cluster
+| | Replicas | 2
+**Server** | Self-hosted Kubernetes Cluster
+| | Replicas | 2
+**Postgres** | DigitalOcean
+| | Instance | Droplet
+| | vCPU | 4
+| | Memory | 8 GB
+| | SSD | 160 GB
+**Elasticsearch** | DigitalOcean
+| | Instance | Droplet
+| | vCPU | 2
+| | Memory | 4 GB
+| | SSD | 80 GB
+**Redis** | Self-hosted Kubernetes Cluster
+| | Replicas | 1
 **Storage** | Amazon S3
 
+Kubernetes cluster specifications:
 
-### Scaled production setup at NZZ
 
-The setup at NZZ is hosted on Amazon cloud services and managed by a third party service provider. Please note that NZZ uses an external system for delivery.
+### Scaled production example
 
-- 100-200 journalists working in the editor
+Below you can find an example production setup hosted in AWS without delivery system.
+
+- 400-500 journalists working in the editor
 - ~100k documents in the database
 - Planning to import 1.6m documents. The import itself is expected to be heavy on the servers, but no massive scaling required for the daily operations
 - An external delivery system with Varnish is used to deliver articles to the user
+- The system includes development, stage and production environments
+
+The production deployment has the following specifications.
 
 Service | Specs | |
 :--- | :--- | ---
-**Editor** | Amazon S3 with local cloudfront CDN
-**Server** | Amazon EC2 with local fastly CDN and a load balancer
-| | Instance | 2x M3 xlarge
-| | vCPU | 4
-| | Memory | 15 GB
-| | SSD | 40 GB
-**Postgres** | Amazon RDS
-| | Instance | 1x M3 xlarge
-| | vCPU | 4
-| | Memory | 15 GB
-| | SSD | 80 GB
-**Elasticsearch** | Hosted instance at elastic.co
-| | Cluster size | 2 (1 replica)
-| | Memory | 4 GB
-| | SSD | 64 GB
+**Editor** | Amazon EKS
+| | Replicas | 1
+**Server** | Amazon EKS
+| | Replicas | 5
+**Postgres** | Amazon Aurora
+| | Instance | 
+| | vCPU | 
+| | Memory | GB
+**Elasticsearch** | Amazon OpenSearch
+| | Instance | 
+| | vCPU | 
+| | Memory | GB
+**Redis** | Amazon EKS
+| | Replicas | 1
 **Storage** | Amazon S3
+
+The whole Livingdocs deployment can be seen in the picture below.
+
+{{< img src="images/lido_example_arch.png" >}}
